@@ -381,6 +381,10 @@ namespace irods_s3 {
         // if archive naming policy is decoupled
         // we use the object's reversed id as S3 key name prefix
         if (archive_naming_policy == DECOUPLED_NAMING) {
+
+            // XXX: The following logic forgets that the base path in the bucket may be bucket
+            // folder object
+
             // extract object name and bucket name from physical path
             std::vector< std::string > tokens;
             irods::string_tokenize(object->physical_path(), "/", tokens);
@@ -417,6 +421,63 @@ namespace irods_s3 {
                 L1desc[index].dataObjInfo->filePath[MAX_NAME_LEN - 1] = '\0';
             }
 
+        } else if (archive_naming_policy == CHROOT_NAMING) {
+            // The user wants to map /iplant/home/tedgin/s3 to the bucket folder object
+            // /buck@id:tht13.html-preview-vscodeet/cyverse. If the logical path to a new data
+            // object is /iplant/home/tedgin/s3/file, then the suggested physical path will be
+            // /bucket/cyverse/home/tedgin/s3/file. We need to replace /home/tedgin/s3/ with /.
+
+            irods::error ret;
+
+            std::string root_coll;
+            ret = _ctx.prop_map().get<std::string>(ROOT_COLL, root_coll);
+            if (ret.ok()) {  // TODO: Log warning if this parameter is missing?
+
+                // Only need to modify the vault path if root collection was provided
+
+                std::string vault_path_root;
+                ret = _ctx.prop_map().get<std::string>(irods::RESOURCE_PATH, vault_path_root);
+                if (!ret.ok()) {
+                    logger::error(fmt::format(
+                            "[{}] {}", get_resource_name(_ctx.prop_map()), ret.result()));
+
+                    // TODO How do we propagate the error?
+                }
+
+                auto rel_vault_path = std::string_view(object->physical_path());
+                rel_vault_path.remove_prefix(std::min(
+                    rel_vault_path.find_first_not_of(vault_path_root), rel_vault_path.size()));
+                rel_vault_path.remove_prefix(std::min(
+                    rel_vault_path.find_first_not_of(root_coll), rel_vault_path.size()));
+
+                // TODO handle case where the rel_vault_path doesn't begin with root_coll
+
+                auto vault_path = vault_path_root + std::string(rel_vault_path);
+
+                // get data id from L1desc
+                int index = -1;
+                for (int i = 0; i < NUM_L1_DESC; ++i) {
+                    if (L1desc[i].inuseFlag) {
+                        if (L1desc[i].dataObjInp && L1desc[i].dataObjInfo &&
+                                L1desc[i].dataObjInp->objPath == object->logical_path()
+                                && L1desc[i].dataObjInfo->filePath == object->physical_path()) {
+
+                            index = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (index > 0) {
+                    // update physical path
+                    logger::debug("{}:{} ({}) [[{}]] updating physical_path to {}",
+                            __FILE__, __LINE__, __FUNCTION__, thread_id, vault_path.c_str());
+
+                    object->physical_path(vault_path);
+                    strncpy(L1desc[index].dataObjInfo->filePath, vault_path.c_str(), MAX_NAME_LEN);
+                    L1desc[index].dataObjInfo->filePath[MAX_NAME_LEN - 1] = '\0';
+                }
+            }
         }
     }
 

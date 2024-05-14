@@ -149,6 +149,7 @@ const std::string  s3_restoration_days{"S3_RESTORATION_DAYS"};          //  numb
 const std::string  s3_restoration_tier{"S3_RESTORATION_TIER"};          //  either "standard", "bulk", or "expedited"
 const std::string  s3_enable_copyobject{"S3_ENABLE_COPYOBJECT"};       //  If set to 0 the CopyObject API will not be used.  Default is to use CopyObject.
 const std::string  s3_non_data_transfer_timeout_seconds{"S3_NON_DATA_TRANSFER_TIMEOUT_SECONDS"};
+const std::string  ROOT_COLL{"ROOT_COLL"};
 
 const std::string  s3_number_of_threads{"S3_NUMBER_OF_THREADS"};        //  to save number of threads
 const std::size_t  S3_DEFAULT_RETRY_WAIT_SECONDS = 2;

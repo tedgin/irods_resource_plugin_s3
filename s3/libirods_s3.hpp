@@ -18,6 +18,7 @@
 #define ARCHIVE_NAMING_POLICY_KW    "ARCHIVE_NAMING_POLICY"
 #define CONSISTENT_NAMING           "consistent"
 #define DECOUPLED_NAMING            "decoupled"
+#define CHROOT_NAMING               "chroot"
 
 // For s3PutCopyFile to identify the real source type
 typedef enum { S3_PUTFILE, S3_COPYOBJECT } s3_putcopy;
@@ -47,6 +48,7 @@ extern const std::string  s3_circular_buffer_size;
 extern const std::string  s3_circular_buffer_timeout_seconds; // timeout for read or write to circular buffer
 extern const std::string  s3_uri_request_style;        //  either "path" or "virtual_hosted" - default "path"
 extern const std::string  s3_number_of_threads;        //  to save number of threads
+extern const std::string  ROOT_COLL;
 extern const std::size_t  S3_DEFAULT_RETRY_WAIT_SECONDS;
 extern const std::size_t  S3_DEFAULT_MAX_RETRY_WAIT_SECONDS;
 extern const std::size_t  S3_DEFAULT_RETRY_COUNT;
